@@ -1,0 +1,13 @@
+{
+  "api_key": "JOUW_YESPLAN_API_KEY",
+  "base_url": "https://JOUW_INSTALLATIE.yesplan.nl/api",
+  "locaties": [
+    "De Nieuwe Vorst",
+    "Grote zaal",
+    "Kleine zaal",
+    "Leesstudio",
+    "Rode salon",
+    "Balkonkamer"
+  ],
+  "output_dir": "/config/www/yesplan"
+}

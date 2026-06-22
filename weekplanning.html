@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekplanning — Yesplan</title>
+<!-- Data file: /config/www/weekplanning.json (gegenereerd door weekplanning.sh) -->
+<!-- Config:    /config/www/config.json -->
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d26;
+    --surface2: #22263a;
+    --surface3: #2a2f45;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #e8eaf0;
+    --muted: #8a8fa8;
+    --accent: #4f7cff;
+    --accent2: #7c3aed;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --purple: #a78bfa;
+    --teal: #2dd4bf;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+    padding: 16px;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-area { display: flex; align-items: center; gap: 10px; }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  h1 { font-size: 18px; font-weight: 600; }
+  .subtitle { font-size: 12px; color: var(--muted); }
+
+  /* Datum dropdown */
+  .date-select {
+    background: rgba(79,124,255,0.1);
+    border: 1px solid rgba(79,124,255,0.3);
+    border-radius: var(--radius-sm);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 12px;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234f7cff' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+  }
+  .date-select:focus { border-color: var(--accent); }
+  .date-select option { background: #1a1d26; color: var(--text); font-weight: 400; }
+  .date-select option.today { font-weight: 700; }
+
+  .zaal-section { margin-bottom: 28px; }
+  .zaal-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--accent2);
+  }
+  .zaal-naam  { font-size: 15px; font-weight: 700; }
+  .zaal-count { font-size: 11px; color: var(--muted); background: var(--surface2); padding: 2px 8px; border-radius: 20px; }
+
+  .event-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .event-block:last-child { margin-bottom: 0; }
+
+  .event-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .event-title { font-size: 15px; font-weight: 700; margin-bottom: 5px; }
+  .event-meta  { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+
+  .badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+  .b-bevestigd { background: rgba(34,197,94,0.12);  color: var(--green); }
+  .b-optie     { background: rgba(79,124,255,0.12); color: var(--accent); }
+  .b-voorlopig { background: rgba(245,158,11,0.12); color: var(--amber); }
+  .b-other     { background: rgba(167,139,250,0.12);color: var(--purple); }
+  .profiel-tag { font-size: 10px; padding: 2px 7px; border-radius: 4px; background: rgba(255,255,255,0.05); color: var(--muted); }
+
+  .event-tijd { text-align: right; white-space: nowrap; flex-shrink: 0; }
+  .time-big   { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+
+  .event-body { display: grid; grid-template-columns: 1fr 1fr; }
+  .event-body > div:first-child { border-right: 1px solid var(--border); }
+
+  .section-inner { padding: 12px 14px; }
+  .section-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.7px; color: var(--muted); margin-bottom: 10px;
+  }
+
+  .schedule-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .schedule-table tr { border-bottom: 1px solid var(--border); }
+  .schedule-table tr:last-child { border-bottom: none; }
+  .schedule-table td { padding: 5px 6px; vertical-align: middle; }
+  .sc-start { font-weight: 700; color: var(--accent); white-space: nowrap; width: 44px; }
+  .sc-end   { font-weight: 600; color: var(--muted);  white-space: nowrap; width: 44px; }
+  .sc-desc  { color: var(--text); }
+  .row-single .sc-start { color: var(--amber); }
+
+  .resource-group { margin-bottom: 8px; }
+  .resource-group:last-child { margin-bottom: 0; }
+  .resource-group-name {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--muted); margin-bottom: 4px;
+  }
+  .resource-item {
+    background: var(--surface2);
+    border-radius: 6px;
+    padding: 5px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 3px;
+  }
+  .resource-item:last-child { margin-bottom: 0; }
+  .resource-left { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .resource-name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .resource-rol  { font-size: 10px; color: var(--muted); }
+  .resource-time { font-size: 10px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+  .type-human    { color: var(--teal); }
+  .type-material { color: var(--amber); }
+
+  .loading { text-align: center; padding: 48px; color: var(--muted); }
+  .spinner { width: 28px; height: 28px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error { background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.2); border-radius: var(--radius); padding: 16px; color: #fca5a5; }
+  .empty-day { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+
+  @media (max-width: 600px) {
+    .event-body { grid-template-columns: 1fr; }
+    .event-body > div:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-area">
+    <div class="logo-icon">🎭</div>
+    <div>
+      <h1>Weekplanning</h1>
+      <div class="subtitle">De Nieuwe Vorst</div>
+    </div>
+  </div>
+  <select class="date-select" id="dateSelect" onchange="renderDay()"></select>
+</header>
+
+<div id="container">
+  <div class="loading"><div class="spinner"></div>Laden...</div>
+</div>
+
+<script>
+const ZAAL_VOLGORDE = ['De Nieuwe Vorst','Grote zaal','Kleine zaal','Leesstudio','Rode salon','Balkonkamer'];
+const ZAAL_ICON = {
+  'De Nieuwe Vorst': '🏛', 'Grote zaal': '🎭', 'Kleine zaal': '🎪',
+  'Leesstudio': '📚', 'Rode salon': '🛋', 'Balkonkamer': '🌿'
+};
+const MONTHS_LONG  = ['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
+const MONTHS_SHORT = ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+const DAYS         = ['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'];
+const pad = n => String(n).padStart(2,'0');
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+let allEvents = [];
+
+function isoDate(d) {
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+function fmtTime(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function badgeInfo(name) {
+  const s = (name||'').toLowerCase();
+  if (s === 'bevestigd') return {cls:'b-bevestigd', label:'Bevestigd'};
+  if (s === 'optie')     return {cls:'b-optie',     label:'Optie'};
+  if (s === 'voorlopig') return {cls:'b-voorlopig', label:'Voorlopig'};
+  return {cls:'b-other', label: name||'—'};
+}
+
+function renderSchedule(entries) {
+  if (!entries || !entries.length)
+    return '<div style="color:var(--muted);font-size:12px">Geen tijdschema beschikbaar.</div>';
+
+  const rows = [];
+  const open = {};
+  entries.forEach(e => {
+    const desc = (e.description || '').trim();
+    if (desc.endsWith('(start)')) {
+      const key = desc.replace(/ \(start\)$/, '').trim();
+      open[key] = e.starttime;
+    } else if (desc.endsWith('(stop)')) {
+      const key = desc.replace(/ \(stop\)$/, '').trim();
+      if (open[key] !== undefined) {
+        rows.push({ start: open[key], end: e.starttime, label: key, isBlock: true });
+        delete open[key];
+      }
+    } else {
+      rows.push({ start: e.starttime, end: null, label: desc, isBlock: false });
+    }
+  });
+  Object.entries(open).forEach(([key, start]) =>
+    rows.push({ start, end: null, label: key, isBlock: false })
+  );
+  rows.sort((a, b) => a.start.localeCompare(b.start));
+
+  return `<table class="schedule-table"><tbody>` +
+    rows.map(r => `
+      <tr class="${r.isBlock ? '' : 'row-single'}">
+        <td class="sc-start">${fmtTime(r.start)}</td>
+        <td class="sc-end">${r.end ? fmtTime(r.end) : ''}</td>
+        <td class="sc-desc">${esc(r.label)}</td>
+      </tr>`).join('') +
+  `</tbody></table>`;
+}
+
+function renderResources(resources) {
+  const filtered = (resources || []).filter(r =>
+    r.type !== 'location' && r.naam !== 'Technicus dagprijs'
+  );
+  if (!filtered.length) return '';
+  const groups = {};
+  filtered.forEach(r => {
+    const g = r.groep || 'Overig';
+    if (!groups[g]) groups[g] = [];
+    groups[g].push(r);
+  });
+  return Object.keys(groups).map(g => `
+    <div class="resource-group">
+      <div class="resource-group-name">${esc(g)}</div>
+      ${groups[g].map(r => `
+        <div class="resource-item">
+          <div class="resource-left">
+            <span class="${r.type === 'human' ? 'type-human' : 'type-material'}">${r.type === 'human' ? '👤' : '📦'}</span>
+            <div>
+              <div class="resource-name">${esc(r.naam)}</div>
+              ${r.rol ? `<div class="resource-rol">${esc(r.rol)}</div>` : ''}
+            </div>
+          </div>
+          <div class="resource-time">${fmtTime(r.start)}–${fmtTime(r.eind)}</div>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+function renderEvent(ev) {
+  const badge   = badgeInfo(ev.status?.name);
+  const profiel = ev.profile?.name || '';
+  const res     = renderResources(ev.resources);
+  return `
+    <div class="event-block">
+      <div class="event-header">
+        <div>
+          <div class="event-title">${esc(ev.name)}</div>
+          <div class="event-meta">
+            <span class="badge ${badge.cls}">${badge.label}</span>
+            ${profiel ? `<span class="profiel-tag">${esc(profiel)}</span>` : ''}
+            ${ev.group ? `<span class="profiel-tag">📁 ${esc(ev.group.name)}</span>` : ''}
+          </div>
+        </div>
+        <div class="event-tijd">
+          <div class="time-big">${fmtTime(ev.starttime)}–${fmtTime(ev.endtime)}</div>
+        </div>
+      </div>
+      <div class="event-body">
+        <div class="section-inner">
+          <div class="section-label">⏱ Tijdschema</div>
+          ${renderSchedule(ev.schedule)}
+        </div>
+        ${res ? `<div class="section-inner">
+          <div class="section-label">👥 Resources</div>
+          ${res}
+        </div>` : ''}
+      </div>
+    </div>`;
+}
+
+function renderDay() {
+  const selectedDate = document.getElementById('dateSelect').value;
+  const events = allEvents.filter(ev => ev.date === selectedDate);
+
+  if (!events.length) {
+    document.getElementById('container').innerHTML =
+      '<div class="empty-day">🎭 Geen evenementen op deze dag.</div>';
+    return;
+  }
+
+  const byZaal = {};
+  events.forEach(ev => {
+    const z = ev.zaal || 'Onbekend';
+    if (!byZaal[z]) byZaal[z] = [];
+    byZaal[z].push(ev);
+  });
+
+  const html = ZAAL_VOLGORDE
+    .filter(z => byZaal[z]?.length > 0)
+    .map(z => {
+      const evs = byZaal[z].sort((a,b) => a.starttime.localeCompare(b.starttime));
+      return `
+        <div class="zaal-section">
+          <div class="zaal-header">
+            <span style="font-size:18px">${ZAAL_ICON[z]||'🏠'}</span>
+            <span class="zaal-naam">${esc(z)}</span>
+            <span class="zaal-count">${evs.length} evenement${evs.length!==1?'en':''}</span>
+          </div>
+          ${evs.map(renderEvent).join('')}
+        </div>`;
+    }).join('');
+
+  document.getElementById('container').innerHTML =
+    html || '<div class="empty-day">Geen evenementen op deze dag.</div>';
+}
+
+function buildDropdown() {
+  const today = new Date();
+  const sel = document.getElementById('dateSelect');
+  sel.innerHTML = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() + i);
+    const val = isoDate(d);
+    const label = i === 0
+      ? `Vandaag — ${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`
+      : `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
+    const opt = document.createElement('option');
+    opt.value = val;
+    opt.textContent = label;
+    if (i === 0) opt.className = 'today';
+    sel.appendChild(opt);
+  }
+}
+
+async function load() {
+  try {
+    const resp = await fetch('/local/yesplan/weekplanning.json?_=' + Date.now());
+    if (!resp.ok) throw new Error(`Bestand niet gevonden (HTTP ${resp.status}). Draai eerst weekplanning.sh`);
+    allEvents = await resp.json();
+    buildDropdown();
+    renderDay();
+  } catch(err) {
+    document.getElementById('container').innerHTML =
+      `<div class="error">⚠ ${err.message}</div>`;
+  }
+}
+
+load();
+setInterval(load, 10 * 60 * 1000);
+</script>
+</body>
+</html>
