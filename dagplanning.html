@@ -290,7 +290,7 @@ function renderEvent(ev) {
           </div>
         </div>
         <div class="event-tijd">
-          <div class="time-big">${fmtTime(ev.starttime)}–${fmtTime(ev.endtime)}</div>
+          <div class="time-big">${ev.defaultschedulestarttime || fmtTime(ev.starttime)}–${ev.defaultscheduleendtime || fmtTime(ev.endtime)}</div>
         </div>
       </div>
       <div class="event-body">
